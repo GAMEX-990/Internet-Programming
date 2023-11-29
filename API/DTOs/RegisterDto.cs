@@ -1,0 +1,15 @@
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace Company.ClassLibrary1;
+#nullable disable
+public class RegisterDto
+{
+    [Required(ErrorMessage = "Please enter a username")]
+    [MinLength(3, ErrorMessage = "Please enter a username at least 3 characters")]
+    public string Username { get; set; }
+    
+    [MinLength(3, ErrorMessage = "Please enter a password at least 3 characters")]
+    public string password { get; set; }
+
+}

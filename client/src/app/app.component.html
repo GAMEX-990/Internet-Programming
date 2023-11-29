@@ -1,9 +1,8 @@
-{{title}}
-
-<!-- snipet ul หรือ ul.xxx เมื่อ xxx คือชื่อ class ที่ต้อง -->
-<ul>
+<app-nav></app-nav>
+<div>
+    <ul>
     <li *ngFor="let user of users">
-        {{user.id}} : {{user.userName}} 
-        <!-- api server ส่งข้อมูลมาเป็น json และ json name convention กำหนดเป็น  camelCased -->
+        <fa-icon [icon]="faBell"></fa-icon> {{user.id}} : {{user.userName}}
     </li>
 </ul>
+</div>
