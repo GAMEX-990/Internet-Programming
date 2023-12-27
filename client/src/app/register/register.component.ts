@@ -5,22 +5,28 @@ import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css']
+  styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent {
-  @Output() isCancel = new EventEmitter()
-  model: any = {}
-  usersFromHomeCpmponent: any;
-  constructor(private toastr: ToastrService, private accountService: AccountService) { }
+  constructor(
+    private toaster: ToastrService,
+    public accountService: AccountService
+  ) {}
+
+  @Input() usersFromHomeCpmponent: any;
+
+  model: any = {};
+
   register() {
     this.accountService.register(this.model).subscribe({
-      next: response => {
-
-      },
-      error: err => this.toastr.error(err)
-    })
+      next: (response) => this.cancel(),
+      error: (err) => this.toaster.error(err.error),
+    });
+    this.cancel();
   }
+
+  @Output() isCancel = new EventEmitter();
   cancel() {
-    this.isCancel.emit(true)
+    this.isCancel.emit(true);
   }
 }

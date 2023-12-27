@@ -7,22 +7,28 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace API.Data.Migrations
+namespace api.Data.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20231126162015_InitCreate")]
-    partial class InitCreate
+    [Migration("20231122072141_AddUserPassword")]
+    partial class AddUserPassword
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.14");
+            modelBuilder.HasAnnotation("ProductVersion", "7.0.13");
 
             modelBuilder.Entity("API.Entities.AppUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte>("PasswordHash")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte>("PasswordSalt")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserName")

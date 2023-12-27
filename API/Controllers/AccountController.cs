@@ -1,79 +1,79 @@
-﻿using System;
+﻿
 using System.Security.Cryptography;
 using System.Text;
-using API.Controllers;
+using api.Controllers;
 using API.Data;
+using API.DTOs;
 using API.Entities;
-using API.Interfaces;
-using Company.ClassLibrary1;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace API.Controllers;
+namespace api;
 
 public class AccountController : BaseApiController
 {
-    public AccountController(DataContext dataContext, ITokenService tokenService)
+  private readonly DataContext _dataContext;
+  private readonly ITokenService _tokenService;
+
+  public AccountController(DataContext dataContext, ITokenService tokenService)
+  {
+    _dataContext = dataContext;
+    _tokenService = tokenService;
+  }
+
+  [HttpPost("register")]
+  public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
+  {
+    if (await isUserExists(registerDto.Username!))
+      return BadRequest("Username is taken");
+
+    using var hmac = new HMACSHA256();
+
+    var user = new AppUser
     {
-        _dataContext = dataContext;
-        _tokenService = tokenService;
-    }
-    private readonly DataContext _dataContext;
-    private ITokenService _tokenService;
+      UserName = registerDto.Username.Trim().ToLower(),
+      PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
+      PasswordSalt = hmac.Key
+    };
 
-   [HttpPost("register")] //ApiController automatically binds the object
-    public async Task<ActionResult<UserDTO>> Register(RegisterDto registerDto)
+    _dataContext.Users.Add(user);
+    await _dataContext.SaveChangesAsync();
+
+    return new UserDto
     {
-        if (await isUserExists(registerDto.Username!))
-            return BadRequest("username is already exists");
+      Username = user.UserName,
+      Token = _tokenService.CreateToken(user)
+    };
+  }
 
-        using var hmacSHA256 = new HMACSHA256();
-        var user = new AppUser
-        {
-            UserName = registerDto.Username.Trim().ToLower(),
-            PasswordHash = hmacSHA256.ComputeHash(Encoding.UTF8.GetBytes(registerDto.password.Trim())),
-            PasswordSalt = hmacSHA256.Key
-        };
+  [HttpPost("login")]
+  public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
+  {
+    var user = await _dataContext.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.Username);
 
-        _dataContext.Users.Add(user);
-        await _dataContext.SaveChangesAsync();
+    if (user == null)
+      return Unauthorized("Invalid username");
 
-        return new UserDTO
-        {
-            Username = user.UserName,
-            Token = _tokenService.CreateToken(user)
-        };
-    }
-    [HttpPost("login")]
-    public async Task<ActionResult<UserDTO>> Login(LoginDto loginDto)
+
+    using var hmac = new HMACSHA256(user.PasswordSalt);
+
+    var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
+
+    for (int i = 0; i < computedHash.Length; i++)
     {
-        var user = await _dataContext.Users.SingleOrDefaultAsync(user =>
-                            user.UserName == loginDto.UserName);
-
-        if (user is null) return Unauthorized("invalid username");
-
-        using var hmacSHA256 = new HMACSHA256(user.PasswordSalt!);
-
-        var computedHash = hmacSHA256.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password!.Trim()));
-        for (int i = 0; i < computedHash.Length; i++)
-        {
-            if (computedHash[i] != user.PasswordHash?[i]) return Unauthorized("invalid password");
-        }
-        return new UserDTO
-        {
-            Username = user.UserName,
-            Token = _tokenService.CreateToken(user)
-        };
+      if (computedHash[i] != user.PasswordHash[i])
+        return Unauthorized("Invalid password");
     }
 
-    private async Task<bool> isUserExists(string username)
+    return new UserDto
     {
-        return await _dataContext.Users.AnyAsync(user => user.UserName == username.ToLower());
-    }
-}
+      Username = user.UserName,
+      Token = _tokenService.CreateToken(user)
+    };
+  }
 
-public class UserDTO
-{
-    public object Token { get; internal set; }
-    public string Username { get; internal set; }
+  private async Task<bool> isUserExists(string username)
+  {
+    return await _dataContext.Users.AnyAsync(x => x.UserName == username.ToLower());
+  }
 }
