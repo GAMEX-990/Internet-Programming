@@ -24,7 +24,7 @@ public class UsersController : BaseApiController
 
   }
 
-  private async Task<AppUser?> _GetUser()
+  private async Task<AppUser> _GetUser()
   {
     var username = User.GetUsername();
     if (username is null) return null;
@@ -97,4 +97,46 @@ public class UsersController : BaseApiController
     return BadRequest("Something has gone wrong!");
   }
 
+
+  [HttpPut("set-main-photo/{photoId}")]
+  public async Task<ActionResult> SetMainPhoto(int photoId)
+  {
+    var user = await _GetUser();
+    if (user is null) return NotFound();
+
+    var photo = user.Photos.FirstOrDefault(photo => photo.Id == photoId);
+    if (photo is null) return NotFound();
+
+    if (photo.IsMain) return BadRequest("this photo(id:" + photo.Id + ") is already main photo");
+
+    var currentMainPhoto = user.Photos.FirstOrDefault(photo => photo.IsMain == true);
+    if (currentMainPhoto is not null) currentMainPhoto.IsMain = false;
+    photo.IsMain = true;
+
+    if (await _userRepository.SaveAllAsync()) return NoContent();
+
+    return BadRequest("Something has gone wrong!");
+  }
+        [HttpDelete("delete-photo/{photoId}")]
+    public async Task<ActionResult> DeletePhoto(int photoId)
+    {
+        var user = await _GetUser();
+        if (user is null) return NotFound();
+
+        var photo = user.Photos.FirstOrDefault(photo => photo.Id == photoId);
+        if (photo is null) return NotFound();
+
+        if (photo.IsMain) return BadRequest("can't delete main photo");
+
+        if (photo.PublicId is not null)
+        {
+            var result = await _imageService.DeleteImageAsync(photo.PublicId);
+            if (result.Error is not null) return BadRequest(result.Error.Message);
+        }
+
+        user.Photos.Remove(photo);
+        if (await _userRepository.SaveAllAsync()) return Ok();
+
+        return BadRequest("Something has gone wrong!");
+    }
 }

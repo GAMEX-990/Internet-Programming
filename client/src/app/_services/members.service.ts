@@ -26,7 +26,7 @@ export class MembersService {
 
   getMembers() {
     if (this.members.length > 0) return of(this.members);
-    return this.http.get<Member[]>(this.baseUrl + '/users').pipe(
+    return this.http.get<Member[]>(this.baseUrl + 'users').pipe(
       map((users) => {
         this.members = users;
         return users;
@@ -47,5 +47,14 @@ export class MembersService {
         this.members[index] = { ...this.members[index], ...member };
       })
     );
+  }
+  setMainPhoto(photoId: number) {
+    const endpoint = this.baseUrl + 'users/set-main-photo/' + photoId
+    return this.http.put(endpoint, {})
+  }
+
+  deletePhoto(photoId: number) {
+    const endpoint = this.baseUrl + 'users/delete-photo/' + photoId
+    return this.http.delete(endpoint)
   }
 }

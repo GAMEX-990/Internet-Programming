@@ -1,11 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { faTrashCan, faStar } from '@fortawesome/free-regular-svg-icons';
+import { faTrashCan, faStar, } from '@fortawesome/free-regular-svg-icons';
 import { take } from 'rxjs';
 import { Member } from 'src/app/_models/member';
 import { User } from 'src/app/_models/user';
 import { AccountService } from 'src/app/_services/account.service';
 import { environment } from 'src/environments/environment';
 import { FileUploader } from 'ng2-file-upload';
+import { Photo } from 'src/app/_models/Photo';
+import { MembersService } from 'src/app/_services/members.service';
 
 @Component({
   selector: 'app-photo-editor',
@@ -20,9 +22,33 @@ export class PhotoEditorComponent implements OnInit {
   hasBaseDropZoneOver = false
   baseUrl = environment.apiUrl
   user: User | undefined | null
-  constructor(private accountService: AccountService) {
+  constructor(private accountService: AccountService, private memberService: MembersService) {
     this.accountService.currentUser$.pipe(take(1)).subscribe({
       next: user => this.user = user
+    })
+  }
+  setMainPhoto(photo: Photo) {
+    this.memberService.setMainPhoto(photo.id).subscribe({
+      next: _ => {
+        if (this.user && this.member) {
+          this.user.photoUrl = photo.url
+          this.accountService.setCurrentUser(this.user)
+          this.member.mainPhotoUrl = photo.url
+          this.member.photos.map((p) => {
+            p.isMain = false
+            if (p.id === photo.id) p.isMain = true
+          })
+        }
+      }
+    })
+  }
+  deletePhoto(photoId: number) {
+    this.memberService.deletePhoto(photoId).subscribe({
+      next: _ => {
+        if (this.member) {
+          this.member.photos = this.member.photos.filter(photo => photo.id !== photoId)
+        }
+      }
     })
   }
   ngOnInit(): void {
@@ -57,4 +83,5 @@ export class PhotoEditorComponent implements OnInit {
       }
     }
   }
+
 }
