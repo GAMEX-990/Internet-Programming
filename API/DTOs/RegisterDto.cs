@@ -5,6 +5,11 @@ namespace API.DTOs;
 public class RegisterDto
 {
 
+  [Required] public string Aka { get; set; }
+  [Required] public string Gender { get; set; }
+  [Required] public DateOnly BirthDate { get; set; }
+  [Required] public string City { get; set; }
+  [Required] public string Country { get; set; }
   [Required(ErrorMessage = "Username is required")]
   [MinLength(3, ErrorMessage = "Username must be at least 3 characters")]
   public string Username { get; set; }

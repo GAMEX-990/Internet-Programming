@@ -1,7 +1,9 @@
 ﻿using System.Security.Claims;
 using API.Data;
 using API.Entities;
+using API.Extensions;
 using API.Interfaces;
+using API.PaginationHeader;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,9 +34,25 @@ public class UsersController : BaseApiController
   }
 
   [HttpGet]
-  public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+  public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
   {
-    return Ok(await _userRepository.GetMembersAsync());
+    var username = User.GetUsername();
+    if (username is null) return NotFound();
+
+    var currentUser = await _userRepository.GetUserByUserNameAsync(username);
+    if (currentUser is null) return NotFound();
+    userParams.CurrentUserName = currentUser.UserName;
+    if (string.IsNullOrEmpty(userParams.Gender))
+    {
+      if (currentUser.Gender != "non-binary")
+        userParams.Gender = currentUser.Gender == "male" ? "female" : "male";
+      else
+        userParams.Gender = "non-binary";
+    }
+    var pages = await _userRepository.GetMembersAsync(userParams);
+    Response.AddPaginationHeader(
+        new PaginationHeader(pages.CurrentPage, pages.PageSize, pages.TotalCount, pages.TotalPages));
+    return Ok(pages);
   }
 
   [HttpGet("{id}")]
@@ -117,26 +135,26 @@ public class UsersController : BaseApiController
 
     return BadRequest("Something has gone wrong!");
   }
-        [HttpDelete("delete-photo/{photoId}")]
-    public async Task<ActionResult> DeletePhoto(int photoId)
+  [HttpDelete("delete-photo/{photoId}")]
+  public async Task<ActionResult> DeletePhoto(int photoId)
+  {
+    var user = await _GetUser();
+    if (user is null) return NotFound();
+
+    var photo = user.Photos.FirstOrDefault(photo => photo.Id == photoId);
+    if (photo is null) return NotFound();
+
+    if (photo.IsMain) return BadRequest("can't delete main photo");
+
+    if (photo.PublicId is not null)
     {
-        var user = await _GetUser();
-        if (user is null) return NotFound();
-
-        var photo = user.Photos.FirstOrDefault(photo => photo.Id == photoId);
-        if (photo is null) return NotFound();
-
-        if (photo.IsMain) return BadRequest("can't delete main photo");
-
-        if (photo.PublicId is not null)
-        {
-            var result = await _imageService.DeleteImageAsync(photo.PublicId);
-            if (result.Error is not null) return BadRequest(result.Error.Message);
-        }
-
-        user.Photos.Remove(photo);
-        if (await _userRepository.SaveAllAsync()) return Ok();
-
-        return BadRequest("Something has gone wrong!");
+      var result = await _imageService.DeleteImageAsync(photo.PublicId);
+      if (result.Error is not null) return BadRequest(result.Error.Message);
     }
+
+    user.Photos.Remove(photo);
+    if (await _userRepository.SaveAllAsync()) return Ok();
+
+    return BadRequest("Something has gone wrong!");
+  }
 }
