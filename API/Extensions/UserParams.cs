@@ -2,7 +2,7 @@
 
 namespace API.Extensions;
 
-public class UserParams
+public class UserParams : PaginationParams
 {
   public int MinAge { get; set; } = 18;
   public int MaxAge { get; set; } = 80;

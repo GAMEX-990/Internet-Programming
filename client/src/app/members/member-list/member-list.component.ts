@@ -25,26 +25,35 @@ export class MemberListComponent implements OnInit {
     { value: 'female', display: 'Female' },
     { value: 'non-binary', display: 'Non-binary' },
   ]
-  resetFilters() {
-    if (this.userParams) {
-      
-      this.userParams = this.memberService.resetUserParams()
-      this.loadMember()
-    }
-  }
-
-  constructor(private memberService: MembersService) {
-    this.userParams = this.memberService.getUserParams()
+  constructor(private accountService: AccountService, private memberService: MembersService) {
+    this.accountService.currentUser$.pipe(take(1)).subscribe({
+      next: user => {
+        if (user) this.user = user
+      }
+    })
   }
 
   ngOnInit(): void {
+    this.resetFilters()
+    if (this.user) {
+      const paramsString = localStorage.getItem('userParams')
+      if (paramsString) {
+        const localParams = JSON.parse(paramsString)
+        if (localParams.username === this.user.username)
+          this.userParams = localParams.params
+      }
+    }
     this.loadMember()
   }
 
-  loadMember() {
+  resetFilters() {
+    if (this.user)
+      this.userParams = new UserParams(this.user)
+  }
 
+  loadMember() {
     if (this.userParams) {
-      this.memberService.setUserParams(this.userParams)
+      this._saveParams()
       this.memberService.getMembers(this.userParams).subscribe({
         next: response => {
           if (response.result && response.pagination) {
@@ -59,8 +68,16 @@ export class MemberListComponent implements OnInit {
   pageChanged(event: any) {
     if (!this.userParams) return
     if (this.userParams.pageNumber === event.page) return
-    this.memberService.setUserParams(this.userParams)
+    this.userParams.pageNumber = event.page
     this.loadMember()
+  }
+
+  private _saveParams() {
+    if (this.user)
+      localStorage.setItem('userParams', JSON.stringify({ 
+              username: this.user.username, 
+              params: this.userParams 
+            }))
   }
 }
 

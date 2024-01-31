@@ -12,24 +12,27 @@ import { AccountService } from './account.service';
   providedIn: 'root',
 })
 export class MembersService {
-  userParams: UserParams | undefined
+  // userParams: UserParams | undefined
   user: User | undefined
   paginationResult: PaginationResult<Member[]> = new PaginationResult<Member[]>
   memberCache = new Map()
   baseUrl = environment.apiUrl;
   members: Member[] = [];
 
-  constructor(private http: HttpClient ,private accountService:AccountService) {
+  constructor(private http: HttpClient, private accountService: AccountService) {
     this.accountService.currentUser$.pipe(take(1)).subscribe({
       next: user => {
         if (user) {
-          this.userParams = new UserParams(user)
+          // this.userParams = new UserParams(user)
           this.user = user
         }
       }
     })
-   }
+  }
 
+  addLike(username: string) {
+    return this.http.post(this.baseUrl + 'likes/' + username, {})
+  }
 
   private _key(userParams: UserParams) {
     return Object.values(userParams).join('_');
@@ -48,22 +51,18 @@ export class MembersService {
     const url = this.baseUrl + 'users'
     return this.getPaginationResult<Member[]>(url, params).pipe(
       map(response => {
-          this.memberCache.set(key, response)
-          return response
+        this.memberCache.set(key, response)
+        return response
       })
-  )
+    )
   }
-  getUserParams() {
-    return this.userParams
-  }
-  setUserParams(params: UserParams) {
-    this.userParams = params
-  }
-  resetUserParams() {
-    if (!this.user) return
-    this.userParams = new UserParams(this.user)
-    return this.userParams
-  }
+  // getUserParams() {
+  //   return this.userParams
+  // }
+  // setUserParams(params: UserParams) {
+  //   this.userParams = params
+  // }
+
   getMember(username: string) {
     // const member = this.members.find((user) => user.userName === username);
     // if (member) return of(member);
@@ -104,7 +103,7 @@ export class MembersService {
         if (pagination)
           paginationResult.pagination = JSON.parse(pagination)
 
-          
+
         return paginationResult
       })
     )
@@ -115,4 +114,12 @@ export class MembersService {
     params = params.append('pageSize', pageSize)
     return params
   }
+
+  getLikes(predicate: string, pageNumber: number, pageSize: number) {
+    let params = this.getPaginationHeaders(pageNumber, pageSize)
+    params = params.append('predicate', predicate)
+    const url = this.baseUrl + 'likes'
+    return this.getPaginationResult<Member[]>(url, params)
+  }
+
 }

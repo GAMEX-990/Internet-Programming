@@ -1,13 +1,16 @@
 using API.DTOs;
 using API.Entities;
+using API.Helpers;
+using API.PageList;
 
 namespace API.Interfaces;
 
-public interface IlikesRepository
+public interface IlikesRepository 
 {
     Task<UserLike> GetUserLike(int sourceUserId, int likedUserId);
 
     Task<AppUser> GetUser(int userId);
 
-    Task<IEnumerable<LikeDto>> GetUserLikes(string predicate, int userId);
+    // Task<IEnumerable<LikeDto>> GetUserLikes(string predicate, int userId);
+    Task<PageList<LikeDto>> GetUserLikes(LikesParams likesParams);
 }
