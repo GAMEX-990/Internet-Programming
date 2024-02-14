@@ -1,15 +1,17 @@
 ﻿using System.Security.Claims;
+using api;
+using API.Controllers;
 using API.Data;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
-using API.PaginationHeader;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Controllers;
+namespace API.Controllers;
 
 [Authorize]
 public class UsersController : BaseApiController
@@ -33,8 +35,9 @@ public class UsersController : BaseApiController
     return await _userRepository.GetUserByUserNameAsync(username);
   }
 
-  [HttpGet]
-  public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
+ [Authorize(Roles = "Administrator,Member")]
+    [HttpGet]
+    public async Task<ActionResult<PageList<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
   {
     var username = User.GetUsername();
     if (username is null) return NotFound();
@@ -53,6 +56,7 @@ public class UsersController : BaseApiController
     Response.AddPaginationHeader(
         new PaginationHeader(pages.CurrentPage, pages.PageSize, pages.TotalCount, pages.TotalPages));
     return Ok(pages);
+
   }
 
   [HttpGet("{id}")]
@@ -61,7 +65,8 @@ public class UsersController : BaseApiController
     return await _userRepository.GetUserByIdAsync(id);
   }
 
-  [HttpGet("username/{username}")]
+   [Authorize(Roles = "Administrator,Moderator,Member")]
+    [HttpGet("username/{username}")]
   public async Task<ActionResult<AppUser>> GetUserByUserName(string username)
   {
     return await _userRepository.GetUserByUserNameAsync(username);
@@ -114,8 +119,6 @@ public class UsersController : BaseApiController
     }
     return BadRequest("Something has gone wrong!");
   }
-
-
   [HttpPut("set-main-photo/{photoId}")]
   public async Task<ActionResult> SetMainPhoto(int photoId)
   {
@@ -153,8 +156,9 @@ public class UsersController : BaseApiController
     }
 
     user.Photos.Remove(photo);
-    if (await _userRepository.SaveAllAsync()) return Ok();
+    if (await _userRepository.SaveAllAsync()) return NoContent();
 
     return BadRequest("Something has gone wrong!");
   }
+
 }

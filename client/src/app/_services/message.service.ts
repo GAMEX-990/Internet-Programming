@@ -1,24 +1,36 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Message } from '../_modules/Message';
 import { getPaginationHeaders, getPaginationResult } from './paginationHelper';
+import { Message } from '../_models/message';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MessageService {
+  baseUrl = environment.apiUrl;
 
-  baseUrl = environment.apiUrl
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) { }
+  getMessages(pageNumber: number, pageSize: number, label: string = 'Unread') {
+    let httpParams = getPaginationHeaders(pageNumber, pageSize);
+    httpParams = httpParams.append('Label', label);
 
-  getMessages(pageNumber: number, pageSize: number, label: string = "Unread") {
-    let httpParams = getPaginationHeaders(pageNumber, pageSize)
-    httpParams = httpParams.append('Label', label)
+    const url = this.baseUrl + '/messages/';
 
-    const url = this.baseUrl + 'messages'
-
-    return getPaginationResult<Message[]>(url, httpParams, this.http)
+    return getPaginationResult<Message[]>(url, httpParams, this.http);
+  }
+  getMessagesThread(username: string) {
+    const url = this.baseUrl + '/messages/thread/' + username
+    return this.http.get<Message[]>(url)
+  }
+  sendMessage(RecipientUsername: string, content: string) {
+    const url = this.baseUrl + '/messages'
+    const body = { RecipientUsername, content } //ต้องสะกดตรงกับ CreateMessageDto.cs
+    return this.http.post<Message>(url, body)
+  }
+  deleteMessage(id: number) {
+    const url = this.baseUrl + '/messages/' + id
+    return this.http.delete(url)
   }
 }

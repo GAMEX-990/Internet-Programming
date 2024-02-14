@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Text.Json;
+using API.Helpers;
 
+namespace API.Extensions;
 
-
-
-namespace API.PaginationHeader;
 public static class HttpExtensions
 {
     public static void AddPaginationHeader(this HttpResponse response, PaginationHeader header)

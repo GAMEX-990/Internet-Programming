@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace API.PaginationHeader;
+namespace API.Helpers;
 
-public  class PaginationHeader
+public class PaginationHeader
 {
     public PaginationHeader(int currentPage, int itemsPerpage, int totalItems, int totalPages)
     {

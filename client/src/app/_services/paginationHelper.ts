@@ -1,6 +1,6 @@
-import { HttpParams, HttpClient } from "@angular/common/http"
+import { HttpClient, HttpParams } from "@angular/common/http"
+import { PaginationResult } from "../_models/pagination"
 import { map } from "rxjs"
-import { PaginationResult } from "../_modules/Pagination "
 
 export function getPaginationResult<T>(url: string, params: HttpParams, http: HttpClient) {
     const paginationResult: PaginationResult<T> = new PaginationResult<T>

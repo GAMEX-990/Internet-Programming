@@ -1,24 +1,24 @@
 ﻿using System;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
-using API.PageList;
-using API.PaginationHeader;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers;
+namespace API.Controllers;
 
 public class LikesController : BaseApiController
 {
-    private readonly IlikesRepository _ilikesRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IlikesRepository _likeRepository;
 
-    public LikesController(IlikesRepository ilikesRepository, IUserRepository userRepository)
+    public LikesController(IUserRepository userRepository, IlikesRepository likeRepository)
     {
-        _ilikesRepository = ilikesRepository;
         _userRepository = userRepository;
+        _likeRepository = likeRepository;
     }
+
     [HttpPost("{username}")]
     public async Task<ActionResult> AddLike(string username)
     {
@@ -30,10 +30,10 @@ public class LikesController : BaseApiController
         var likedUser = await _userRepository.GetUserByUserNameWithOutPhotoAsync(username);
         if (likedUser is null) return NotFound();
 
-        var sourceUser = await _ilikesRepository.GetUser(sourceUserId);
+        var sourceUser = await _likeRepository.GetUser(sourceUserId);
         if (sourceUser.UserName == username) return BadRequest("can't like yourself");
 
-        var userLike = await _ilikesRepository.GetUserLike(sourceUserId, likedUser.Id);
+        var userLike = await _likeRepository.GetUserLike(sourceUserId, likedUser.Id);
         if (userLike is not null) return BadRequest($"already like this user {likedUser.UserName}");
 
         userLike = new UserLike
@@ -46,24 +46,22 @@ public class LikesController : BaseApiController
         if (await _userRepository.SaveAllAsync()) return Ok(); //not good, but work
 
         return BadRequest("Something has gone wrong!");
-
     }
-     [HttpGet]
-       public async Task<ActionResult<PageList<LikeDto>>> GetUserLikes([FromQuery] LikesParams likesParams)
+
+    [HttpGet]
+    public async Task<ActionResult<PageList<LikeDto>>> GetUserLikes([FromQuery] LikesParams likesParams)
     {
-        var _user_id = User.GetUserId();
-        if (_user_id is null) return NotFound();
-        likesParams.UserId = (int)_user_id;
+        var string_user_id = User.GetUserId();
+        if (string_user_id is null) return NotFound();
+        likesParams.UserId = (int)string_user_id;
 
-        var users = await _ilikesRepository.GetUserLikes(likesParams);
-
-        var paginationHeader = new PaginationHeader(
+        var users = await _likeRepository.GetUserLikes(likesParams);
+          var paginationHeader = new PaginationHeader(
             users.CurrentPage, 
             users.PageSize, 
             users.TotalCount, 
             users.TotalPages);
         Response.AddPaginationHeader(paginationHeader);
-
         return Ok(users);
     }
 }

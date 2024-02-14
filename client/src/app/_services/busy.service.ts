@@ -11,9 +11,10 @@ export class BusyService {
   busy(name?: string | undefined) {
     this.count++;
     this.spinner.show(name, {
-      type: 'square-spin',
+      type: 'timer',
       bdColor: 'rgba(255,255,255,0)',
-      color: '#E95420',
+      color: '#747474',
+      size:  "medium" ,
     });
   }
   idle(name?: string | undefined) {

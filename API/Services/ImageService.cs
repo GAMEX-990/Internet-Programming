@@ -2,7 +2,8 @@
 using API.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Microsoft.Extensions.Options;public class ImageService : IImageService
+using Microsoft.Extensions.Options;
+public class ImageService : IImageService
 {
     private readonly Cloudinary _cloudinary;
     public ImageService(IOptions<CloudinarySettings> conf)
@@ -23,7 +24,7 @@ using Microsoft.Extensions.Options;public class ImageService : IImageService
             {
                 File = new FileDescription(file.FileName, stream),
                 Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
-                Folder = "dotnet7-tinner"
+                Folder = "Crepe"
             };
             uploadResualt = await _cloudinary.UploadAsync(uploadParams);
         }

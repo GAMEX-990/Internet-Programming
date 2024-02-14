@@ -1,9 +1,12 @@
+
 import { Component, OnInit } from '@angular/core';
 import { Observable, take } from 'rxjs';
-import { UserParams } from 'src/app/_models/UserParams ';
+
 import { Member } from 'src/app/_models/member';
+import { Pagination } from 'src/app/_models/pagination';
 import { User } from 'src/app/_models/user';
-import { Pagination } from 'src/app/_modules/Pagination ';
+import { UserParams } from 'src/app/_models/userParams';
+
 import { AccountService } from 'src/app/_services/account.service';
 import { MembersService } from 'src/app/_services/members.service';
 
@@ -80,5 +83,4 @@ export class MemberListComponent implements OnInit {
             }))
   }
 }
-
 
