@@ -22,7 +22,7 @@ export class MembersService {
   memberCache = new Map()
   baseUrl = environment.apiUrl;
   members: Member[] = [];
-
+  
   constructor(private http: HttpClient,private accountService:AccountService,) 
   { 
     this.accountService.currentUser$.pipe(take(1)).subscribe({

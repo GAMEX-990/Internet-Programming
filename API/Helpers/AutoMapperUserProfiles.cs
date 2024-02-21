@@ -8,6 +8,13 @@ public class AutoMapperUserProfiles : Profile
 {
   public AutoMapperUserProfiles()
   {
+    CreateMap<DateTime, DateTime>()
+    .ConvertUsing(datetime => DateTime.SpecifyKind(datetime, DateTimeKind.Utc));
+
+    CreateMap<DateTime?, DateTime?>()
+        .ConvertUsing(datetime => datetime.HasValue
+            ? DateTime.SpecifyKind(datetime.Value, DateTimeKind.Utc)
+            : null);
     CreateMap<AppUser, MemberDto>()
             .ForMember(
                 user => user.MainPhotoUrl,
@@ -21,6 +28,7 @@ public class AutoMapperUserProfiles : Profile
                     user => user.BirthDate.CalculateAge()
                     )
                 );
+
     CreateMap<Photo, PhotoDto>();
     CreateMap<MemberUpdateDto, AppUser>();
     CreateMap<RegisterDto, AppUser>();
